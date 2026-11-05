@@ -1,32 +1,5 @@
-name: "Paso 3 — Mapa de Procesos (flujo único)"
 
-# Úsalo si tu modelo de ciclo de vida NO tiene procesos en paralelo
-# (secuencial, iterativo, incremental, cascada simple, etc.).
-# Si tu modelo sí tiene ramas en paralelo, usa en su lugar el workflow
-# "mapa-procesos-paralelo.yml".
-#
-# Fíjate el primer proceso (Requisitos) crea el documento Y agrega su propia
-# información en el mismo job (en dos steps independientes), y el
-# último proceso (Testing) agrega su información Y hace el commit/push
-# en el mismo job. Así, cada job que ves en la pestaña Actions es un
-# proceso real del proyecto — no hay jobs de "plumbing" sin información
-# relevante ensuciando la vista del flujo.
-#
-# Cómo usarlo:
-# 1. Reemplaza el contenido de los jobs de ejemplo (requisitos, diseño,
-#    implementacion, testing) por los procesos reales que tu equipo
-#    seleccionó en el Paso 3. Puedes duplicar el bloque de un job tantas
-#    veces como procesos tengas, ajustando el "needs:" para reflejar el
-#    orden real de tu modelo de ciclo de vida.
-# 2. El primer job de la cadena es el único que debe crear el documento
-#    (con el encabezado) además de agregar su proceso, cada cosa en su
-#    propio step; los jobs intermedios solo descargan, agregan y vuelven
-#    a subir el artifact; el último job, además de agregar su proceso,
-#    hace el commit/push.
-# 3. Ve a la pestaña "Actions" -> este workflow -> "Run workflow".
-#    Se dispara SOLO manualmente para no gastar minutos de CI de la
-#    organización.
-# 4. El resultado final queda en docs/mapa-procesos.md.
+name: "Paso 3 — Mapa de Procesos FinAnalyze (flujo único)"
 
 on:
   workflow_dispatch:
@@ -35,36 +8,31 @@ permissions:
   contents: write
 
 jobs:
-  # -----------------------------------------------------------------
-  # Primer proceso: crea el documento (con su encabezado) en un step, y
-  # agrega su propia información en otro step, independiente. No tiene
-  # "needs:" porque es la raíz de la cadena.
-  # -----------------------------------------------------------------
   requisitos:
-    name: "Requisitos"
+    name: "Análisis y definición de requisitos"
     runs-on: ubuntu-latest
     steps:
       - name: Crear documento
         run: |
           mkdir -p docs
           cat <<'EOF' > docs/mapa-procesos.md
-          # Mapa de Procesos y Modelo de Ciclo de Vida
+          # Mapa de Procesos de FinAnalyze
 
-          > Generado con el workflow de flujo único. La definición formal del
-          > modelo de ciclo de vida (justificación, orden, relación entre
-          > procesos) se documenta en la wiki, página `04c-Modelo-Ciclo-Vida`,
-          > no en este archivo.
+          > Generado mediante el workflow de flujo único.
+          > Los procesos se ejecutan secuencialmente dentro de cada incremento.
+          > El modelo de ciclo de vida se describe formalmente en la Wiki,
+          > página `04c-Modelo-Ciclo-Vida`.
 
           EOF
       - name: Agregar este proceso al documento
         run: |
           cat <<'EOF' >> docs/mapa-procesos.md
-          ## Proceso: Requisitos
+          ## Proceso: Análisis y definición de requisitos
 
-          - **Entradas:** Modelo verbal extendido, necesidades de negocio e interesados
-          - **Actividades:** Elicitación, análisis y especificación de requisitos
-          - **Salidas:** Documento de especificación de requisitos
-          - **Recursos:** BABOK v3, entrevistas/supuestos del equipo
+          - **Entradas:** Modelo verbal extendido, necesidades del negocio, necesidades de los interesados y actores identificados
+          - **Actividades:** Identificación, análisis, especificación, priorización y organización de requisitos funcionales y no funcionales
+          - **Salidas:** Requisitos documentados, módulos identificados y criterios de aceptación
+          - **Recursos:** Equipo del proyecto, BABOK v3 como referencia, GitHub Issues, GitHub Projects y GitHub Wiki
 
           EOF
       - name: Subir artifact
@@ -74,13 +42,8 @@ jobs:
           path: docs/mapa-procesos.md
           overwrite: true
 
-  # -----------------------------------------------------------------
-  # Procesos intermedios: descargan el documento, agregan su proceso y
-  # lo vuelven a subir. Copia este bloque por cada proceso intermedio
-  # que necesites.
-  # -----------------------------------------------------------------
   diseno:
-    name: "Diseño"
+    name: "Diseño de arquitectura y componentes"
     needs: requisitos
     runs-on: ubuntu-latest
     steps:
@@ -92,12 +55,12 @@ jobs:
       - name: Agregar este proceso al documento
         run: |
           cat <<'EOF' >> docs/mapa-procesos.md
-          ## Proceso: Diseño
+          ## Proceso: Diseño de arquitectura y componentes
 
-          - **Entradas:** Documento de especificación de requisitos
-          - **Actividades:** Definición de módulos, interfaces y decisiones de diseño
-          - **Salidas:** Vista arquitectónica del sistema
-          - **Recursos:** Requisitos funcionales/no funcionales priorizados
+          - **Entradas:** Requisitos funcionales y no funcionales, módulos identificados y restricciones técnicas
+          - **Actividades:** Definición de la arquitectura, diseño de la base de datos, separación del frontend y backend y especificación de interfaces de comunicación
+          - **Salidas:** Diseño de arquitectura, modelo de datos y especificación de interfaces
+          - **Recursos:** Equipo de desarrollo, Python, JavaScript, D3.js, SQL y herramientas de documentación
 
           EOF
       - name: Subir artifact
@@ -107,8 +70,8 @@ jobs:
           path: docs/mapa-procesos.md
           overwrite: true
 
-  implementacion:
-    name: "Implementación"
+  backend:
+    name: "Implementación del backend"
     needs: diseno
     runs-on: ubuntu-latest
     steps:
@@ -120,12 +83,12 @@ jobs:
       - name: Agregar este proceso al documento
         run: |
           cat <<'EOF' >> docs/mapa-procesos.md
-          ## Proceso: Implementación
+          ## Proceso: Implementación del backend
 
-          - **Entradas:** Vista arquitectónica del sistema
-          - **Actividades:** Construcción de los módulos definidos en el diseño
-          - **Salidas:** Componentes de software construidos
-          - **Recursos:** Estándares de codificación, entorno de desarrollo
+          - **Entradas:** Requisitos del sistema, diseño de arquitectura, modelo de datos y especificación de interfaces
+          - **Actividades:** Implementación de la lógica de negocio, desarrollo de servicios y API, conexión con la base de datos e implementación de funcionalidades financieras
+          - **Salidas:** Código fuente del backend, servicios implementados, API disponibles y documentación técnica
+          - **Recursos:** Equipo de desarrollo, Python, SQL, Git, GitHub y entorno de ejecución
 
           EOF
       - name: Subir artifact
@@ -135,14 +98,93 @@ jobs:
           path: docs/mapa-procesos.md
           overwrite: true
 
-  # -----------------------------------------------------------------
-  # Último proceso: agrega su propia información Y, en el mismo job,
-  # hace el commit/push del documento final. Cambia el "needs:" para
-  # que apunte a tu ÚLTIMO proceso real.
-  # -----------------------------------------------------------------
-  testing:
-    name: "Testing"
-    needs: implementacion
+  pruebas_backend:
+    name: "Pruebas del backend"
+    needs: backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mapa-procesos
+          path: docs/
+      - name: Agregar este proceso al documento
+        run: |
+          cat <<'EOF' >> docs/mapa-procesos.md
+          ## Proceso: Pruebas del backend
+
+          - **Entradas:** Código fuente del backend, requisitos funcionales, criterios de aceptación y servicios implementados
+          - **Actividades:** Diseño y ejecución de pruebas, verificación de cálculos financieros, validación de API, identificación y corrección de defectos
+          - **Salidas:** Resultados de pruebas, defectos registrados y servicios del backend verificados
+          - **Recursos:** Equipo de desarrollo, herramientas de pruebas, entorno de ejecución y GitHub Issues
+
+          EOF
+      - name: Subir artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapa-procesos
+          path: docs/mapa-procesos.md
+          overwrite: true
+
+  frontend:
+    name: "Implementación del frontend"
+    needs: pruebas_backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mapa-procesos
+          path: docs/
+      - name: Agregar este proceso al documento
+        run: |
+          cat <<'EOF' >> docs/mapa-procesos.md
+          ## Proceso: Implementación del frontend
+
+          - **Entradas:** Requisitos de interfaz, diseño de arquitectura, especificación de las API y servicios del backend verificados
+          - **Actividades:** Construcción de interfaces, desarrollo de formularios y dashboards, implementación de gráficos y consumo de servicios del backend
+          - **Salidas:** Código fuente del frontend, interfaces implementadas y componentes visuales
+          - **Recursos:** Equipo de desarrollo, JavaScript, D3.js, documentación de API, Git y GitHub
+
+          EOF
+      - name: Subir artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapa-procesos
+          path: docs/mapa-procesos.md
+          overwrite: true
+
+  integracion:
+    name: "Integración y pruebas del sistema"
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mapa-procesos
+          path: docs/
+      - name: Agregar este proceso al documento
+        run: |
+          cat <<'EOF' >> docs/mapa-procesos.md
+          ## Proceso: Integración y pruebas del sistema
+
+          - **Entradas:** Backend verificado, frontend implementado, interfaces de comunicación y requisitos del sistema
+          - **Actividades:** Integración de componentes, configuración de conexiones, ejecución de pruebas de integración y sistema, validación de requisitos y corrección de defectos
+          - **Salidas:** Sistema integrado, resultados de pruebas, defectos corregidos y versión candidata para entrega
+          - **Recursos:** Equipo de desarrollo, entorno de pruebas, herramientas de integración, GitHub y documentación del sistema
+
+          EOF
+      - name: Subir artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapa-procesos
+          path: docs/mapa-procesos.md
+          overwrite: true
+
+  despliegue:
+    name: "Despliegue y transición"
+    needs: integracion
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -156,15 +198,15 @@ jobs:
       - name: Agregar este proceso al documento
         run: |
           cat <<'EOF' >> docs/mapa-procesos.md
-          ## Proceso: Testing
+          ## Proceso: Despliegue y transición
 
-          - **Entradas:** Componentes de software construidos
-          - **Actividades:** Diseño y ejecución de pruebas, registro de defectos
-          - **Salidas:** Reporte de pruebas, defectos identificados
-          - **Recursos:** Plan de pruebas, casos de prueba
+          - **Entradas:** Sistema integrado y verificado, versión candidata, documentación técnica y configuración del entorno de ejecución
+          - **Actividades:** Preparación del entorno, configuración de la aplicación, publicación de la versión aprobada, verificación del funcionamiento y entrega de documentación
+          - **Salidas:** Versión desplegada de FinAnalyze, documentación de instalación y utilización y registro de entrega
+          - **Recursos:** Equipo de desarrollo, repositorio GitHub, entorno de despliegue, documentación técnica y herramientas de configuración
 
           EOF
       - name: Commit y push
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "docs(mapa-procesos): actualizar mapa de procesos (flujo único)"
+          commit_message: "docs(mapa-procesos): actualizar mapa de procesos FinAnalyze"
